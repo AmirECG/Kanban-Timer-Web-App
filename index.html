@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Tablero Kanban con temporizador por tarea, modo oscuro y persistencia local."
+    />
+    <meta name="theme-color" content="#0f0f0f" />
+    <title>Kanban Timer Board</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header role="banner">
+      <div class="header-inner">
+        <span class="logo">Kanban<span>·</span>Timer</span>
+
+        <button
+          class="btn btn-accent"
+          id="openFormBtn"
+          aria-expanded="false"
+          aria-controls="addForm"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          <span>Nueva tarea</span>
+        </button>
+
+        <div class="theme-toggle">
+          <input
+            type="checkbox"
+            id="themeToggle"
+            role="switch"
+            aria-label="Modo oscuro"
+          />
+          <label class="theme-label" for="themeToggle" id="themeIcon">
+            <svg viewBox="0 0 24 24" aria-hidden="true" id="iconSun">
+              <circle cx="12" cy="12" r="5" />
+              <line x1="12" y1="1" x2="12" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+              <line x1="1" y1="12" x2="3" y2="12" />
+              <line x1="21" y1="12" x2="23" y2="12" />
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              id="iconMoon"
+              style="display: none"
+            >
+              <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" />
+            </svg>
+            <span id="themeLabel">Claro</span>
+          </label>
+        </div>
+      </div>
+    </header>
+
+    <section id="addForm" class="add-form" aria-label="Formulario nueva tarea">
+      <div class="add-form-container">
+        <div class="add-form-row">
+          <div class="field" style="min-width: 220px; flex: 2">
+            <label for="fTitle">Título *</label>
+            <input
+              type="text"
+              id="fTitle"
+              placeholder="Nombre de la tarea"
+              maxlength="120"
+              required
+            />
+          </div>
+          <div class="field" style="min-width: 160px; flex: 2">
+            <label for="fDesc">Descripción</label>
+            <textarea
+              id="fDesc"
+              placeholder="Detalles opcionales…"
+              maxlength="300"
+              rows="2"
+            ></textarea>
+          </div>
+          <div class="field" style="min-width: 130px">
+            <label for="fPriority">Prioridad</label>
+            <select id="fPriority">
+              <option value="baja">🟢 Baja</option>
+              <option value="media" selected>🟡 Media</option>
+              <option value="alta">🔴 Alta</option>
+            </select>
+          </div>
+          <div class="field" style="min-width: 140px">
+            <label for="fColumn">Columna inicial</label>
+            <select id="fColumn">
+              <option value="todo">Pendientes</option>
+              <option value="wip">En progreso</option>
+              <option value="done">Terminadas</option>
+            </select>
+          </div>
+          <div style="display: flex; gap: 0.5rem; align-items: flex-end">
+            <button class="btn btn-accent" id="saveCardBtn">Agregar</button>
+            <button class="btn" id="cancelFormBtn">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <main class="board-wrap" role="main" aria-label="Tablero Kanban" id="board">
+      <section
+        class="column"
+        id="col-todo"
+        aria-label="Pendientes"
+        data-col="todo"
+      >
+        <div class="col-header">
+          <div
+            class="col-dot"
+            style="background: var(--col-todo)"
+            aria-hidden="true"
+          ></div>
+          <h2 class="col-title">Pendientes</h2>
+          <span class="col-count" id="cnt-todo" aria-label="tareas pendientes"
+            >0</span
+          >
+        </div>
+        <div class="col-body" id="body-todo" role="list"></div>
+      </section>
+
+      <section
+        class="column"
+        id="col-wip"
+        aria-label="En progreso"
+        data-col="wip"
+      >
+        <div class="col-header">
+          <div
+            class="col-dot"
+            style="background: var(--col-wip)"
+            aria-hidden="true"
+          ></div>
+          <h2 class="col-title">En progreso</h2>
+          <span class="col-count" id="cnt-wip" aria-label="tareas en progreso"
+            >0</span
+          >
+        </div>
+        <div class="col-body" id="body-wip" role="list"></div>
+      </section>
+
+      <section
+        class="column"
+        id="col-done"
+        aria-label="Terminadas"
+        data-col="done"
+      >
+        <div class="col-header">
+          <div
+            class="col-dot"
+            style="background: var(--col-done)"
+            aria-hidden="true"
+          ></div>
+          <h2 class="col-title">Terminadas</h2>
+          <span class="col-count" id="cnt-done" aria-label="tareas terminadas"
+            >0</span
+          >
+        </div>
+        <div class="col-body" id="body-done" role="list"></div>
+      </section>
+    </main>
+
+    <div
+      class="modal-backdrop"
+      id="editModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="editModalTitle"
+    >
+      <div class="modal">
+        <p class="modal-title" id="editModalTitle">Editar tarea</p>
+        <div style="display: flex; flex-direction: column; gap: 0.9rem">
+          <div class="field">
+            <label for="eFTitle">Título</label>
+            <input type="text" id="eFTitle" maxlength="120" />
+          </div>
+          <div class="field">
+            <label for="eFDesc">Descripción</label>
+            <textarea id="eFDesc" rows="3" maxlength="300"></textarea>
+          </div>
+          <div class="field">
+            <label for="eFPriority">Prioridad</label>
+            <select id="eFPriority">
+              <option value="baja">🟢 Baja</option>
+              <option value="media">🟡 Media</option>
+              <option value="alta">🔴 Alta</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn" id="cancelEditBtn">Cancelar</button>
+          <button class="btn btn-accent" id="saveEditBtn">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
